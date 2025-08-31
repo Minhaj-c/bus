@@ -22,4 +22,5 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path('', include('routes.urls')),
     path('', include('schedules.urls')),
+    path('', include('preinforms.urls')),
 ]
