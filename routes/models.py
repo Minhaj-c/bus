@@ -10,6 +10,27 @@ class Route(models.Model):
     origin = models.CharField(max_length=100) # Starting point
     destination = models.CharField(max_length=100) # Ending point
     total_distance = models.DecimalField(max_digits=6, decimal_places=2, help_text="Distance in kilometers") # e.g., 22.50 km
+    # NEW FIELD: Add this. Duration of the trip in hours (e.g., 1.5 for 1 hour 30 minutes)
+    duration = models.DecimalField(
+        max_digits=4, 
+        decimal_places=2, 
+        default=1.0,
+        help_text="Duration of the trip in hours (e.g., 1.5 for 1 hour 30 minutes)"
+    )
+
+    # NEW FIELDS: Operational timings
+    turnaround_time = models.DecimalField(
+        max_digits=4, 
+        decimal_places=2, 
+        default=0.33, 
+        help_text="Turnaround time at terminal in hours (e.g., 0.33 for 20 minutes)"
+    )
+    buffer_time = models.DecimalField(
+        max_digits=4, 
+        decimal_places=2, 
+        default=0.16, 
+        help_text="Buffer time for delays in hours (e.g., 0.16 for 10 minutes)"
+    )
 
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
@@ -17,6 +38,20 @@ class Route(models.Model):
 
     def __str__(self):
         return f"{self.number}: {self.origin} to {self.destination}"
+    
+    # NEW METHOD: Calculate trips per day
+    def calculate_trips_per_day(self, operational_hours=15):
+        """
+        Calculate how many round trips a bus can make on this route in a day.
+        operational_hours: Default is 15 (6 AM to 9 PM). Can be overridden.
+        """
+        # Calculate total time for one round trip: (A->B + B->A) + turnaround + buffer
+        total_time_per_trip = (self.duration * 2) + self.turnaround_time + self.buffer_time
+        # Calculate how many trips fit into the operational window
+        trips = operational_hours / total_time_per_trip
+        # Return the result, rounded down to the nearest whole number
+        return int(trips)
+
 
 class Stop(models.Model):
     # Link this stop to a specific route
