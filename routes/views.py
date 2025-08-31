@@ -1,3 +1,20 @@
-from django.shortcuts import render
+from django.http import JsonResponse
+from rest_framework import generics
+from .models import Route
+from .serializers import RouteSerializer
 
-# Create your views here.
+# Add this new function at the top of the file
+def api_welcome(request):
+    """A simple welcome message for the API root"""
+    return JsonResponse({
+        'message': 'Welcome to the Transport Management API!',
+        'endpoints': {
+            'routes': '/api/routes/',
+            'admin': '/admin/'
+        }
+    })
+
+class RouteListView(generics.ListAPIView):
+    """API view to list all bus routes."""
+    queryset = Route.objects.all().prefetch_related('stops')
+    serializer_class = RouteSerializer
