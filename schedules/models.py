@@ -5,6 +5,7 @@ from routes.models import Route # To reference the Route model
 class Bus(models.Model):
     number_plate = models.CharField(max_length=15, unique=True) # e.g., "ABC-1234"
     capacity = models.PositiveIntegerField(default=40) # Total number of seats
+    mileage = models.DecimalField(max_digits=5, decimal_places=2, default=5.0, help_text="Mileage in km/liter") 
     is_active = models.BooleanField(default=True)
 
     def __str__(self):

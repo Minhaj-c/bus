@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'schedules',
     'preinforms',
     'demand',
+    'operations',
 ]
 
 MIDDLEWARE = [
@@ -141,3 +142,7 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.AllowAny',  # Default to allowing any (we'll override per view)
     ]
 }
+
+# Constants for financial calculations
+TICKET_PRICE_PER_KM = 2  # Rs. 2 per kilometer
+FUEL_PRICE_PER_LITER = 100  # Rs. 100 per liter
