@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Submit Travel Plan</h2>
+
+<div class="card">
+    <h3>Bus Details</h3>
+    <p><strong>Route:</strong> {{ schedule.route.number }} - {{ schedule.route.name }}</p>
+    <p><strong>Date:</strong> {{ schedule.date }}</p>
+    <p><strong>Time:</strong> {{ schedule.departure_time }} - {{ schedule.arrival_time }}</p>
+    <p><strong>Bus:</strong> {{ schedule.bus.number_plate }}</p>
+    <p><strong>Available Seats:</strong> {{ schedule.available_seats }}/{{ schedule.total_seats }}</p>
+</div>
+
+<div class="card">
+    <h3>Your Travel Information</h3>
+    <form id="preinform-form">
+        {% csrf_token %}
+        <input type="hidden" name="route" value="{{ schedule.route.id }}">
+        <input type="hidden" name="date_of_travel" value="{{ schedule.date|date:'Y-m-d' }}">
+        
+        <div>
+            <label>Desired Time:</label>
+            <!-- Change this line: -->
+            <input type="time" name="desired_time" value="{{ schedule.departure_time|time:'H:i' }}" required>
+        </div>
+        
+        <div>
+            <label>Boarding Stop:</label>
+            <select name="boarding_stop" required>
+                <option value="">Select boarding stop</option>
+                {% for stop in schedule.route.stops.all %}
+                <option value="{{ stop.id }}">{{ stop.sequence }}. {{ stop.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div>
+            <label>Number of Passengers:</label>
+            <input type="number" name="passenger_count" min="1" max="{{ schedule.available_seats }}" value="1" required>
+        </div>
+        
+        <button type="submit">Submit Travel Plan</button>
+    </form>
+</div>
+
+<div id="form-message"></div>
+
+<script>
+    document.getElementById('preinform-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const formObject = Object.fromEntries(formData.entries());
+        formObject.passenger_count = parseInt(formObject.passenger_count);
+        
+        const messageDiv = document.getElementById('form-message');
+        messageDiv.innerHTML = 'Submitting...';
+        messageDiv.style.color = 'blue';
+
+        try {
+            const response = await fetch('/api/preinforms/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+                },
+                body: JSON.stringify(formObject)
+            });
+
+            if (response.ok) {
+                messageDiv.innerHTML = '✅ Travel plan submitted successfully!';
+                messageDiv.style.color = 'green';
+                this.reset();
+            } else {
+                const error = await response.json();
+                messageDiv.innerHTML = '❌ Error: ' + (error.detail || JSON.stringify(error));
+                messageDiv.style.color = 'red';
+            }
+        } catch (error) {
+            messageDiv.innerHTML = '❌ Network error: ' + error.message;
+            messageDiv.style.color = 'red';
+        }
+    });
+</script>
+{% endblock %}

@@ -2,6 +2,7 @@ from rest_framework import generics
 from django.utils import timezone
 from .models import Schedule
 from .serializers import ScheduleSerializer
+from django.shortcuts import render
 
 class ScheduleListView(generics.ListAPIView):
     """API view to list schedules, optionally filtered by route and date."""
@@ -25,3 +26,9 @@ class ScheduleListView(generics.ListAPIView):
             queryset = queryset.filter(date__gte=today)
         
         return queryset.order_by('date', 'departure_time')
+
+def schedules_page(request):
+    """Serve the schedules frontend page"""
+    route_id = request.GET.get('route_id')
+    context = {'route_id': route_id}
+    return render(request, 'schedules.html', context)    

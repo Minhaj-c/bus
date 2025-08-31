@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Available Bus Routes</h2>
+<div id="routes-list">
+    <p>Loading routes...</p>
+</div>
+
+<script>
+    // Load and display routes on page load
+    document.addEventListener('DOMContentLoaded', async function() {
+        const routesContainer = document.getElementById('routes-list');
+        
+        try {
+            const routes = await apiCall('/api/routes/');
+            routesContainer.innerHTML = ''; // Clear loading message
+            
+            routes.forEach(route => {
+                const routeCard = document.createElement('div');
+                routeCard.className = 'card';
+                routeCard.innerHTML = `
+                    <h3>Route ${route.number}: ${route.name}</h3>
+                    <p>From ${route.origin} to ${route.destination}</p>
+                    <p>Distance: ${route.total_distance} km</p>
+                    <button onclick="viewSchedules(${route.id})">View Schedules & Pre-Inform</button>
+                `;
+                routesContainer.appendChild(routeCard);
+            });
+        } catch (error) {
+            routesContainer.innerHTML = '<p>Error loading routes. Please try again.</p>';
+        }
+    });
+
+    function viewSchedules(routeId) {
+        // Redirect to schedules page for this route
+        window.location.href = `/schedules/?route_id=${routeId}`;
+    }
+</script>
+{% endblock %}

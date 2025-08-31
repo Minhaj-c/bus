@@ -2,6 +2,7 @@ from django.http import JsonResponse
 from rest_framework import generics
 from .models import Route
 from .serializers import RouteSerializer
+from django.shortcuts import render 
 
 # Add this new function at the top of the file
 def api_welcome(request):
@@ -15,6 +16,11 @@ def api_welcome(request):
             'preinforms': '/api/preinforms/',
         }
     })
+    
+def homepage(request):
+    """Serve the main frontend page"""
+    return render(request, 'homepage.html')
+    
 
 class RouteListView(generics.ListAPIView):
     """API view to list all bus routes."""

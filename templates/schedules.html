@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>Available Schedules</h2>
+<div id="schedules-list">
+    <p>Loading schedules...</p>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', async function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const routeId = urlParams.get('route_id');
+        const today = new Date().toISOString().split('T')[0]; // Get today's date YYYY-MM-DD
+        
+        const schedulesContainer = document.getElementById('schedules-list');
+        
+        try {
+            const schedules = await apiCall(`/api/schedules/?route_id=${routeId}&date=${today}`);
+            schedulesContainer.innerHTML = ''; // Clear loading message
+            
+            if (schedules.length === 0) {
+                schedulesContainer.innerHTML = '<p>No schedules available for this route today.</p>';
+                return;
+            }
+            
+            schedules.forEach(schedule => {
+                const scheduleCard = document.createElement('div');
+                scheduleCard.className = 'card';
+                scheduleCard.innerHTML = `
+                    <h3>${schedule.route.number}: ${schedule.route.name}</h3>
+                    <p>Date: ${schedule.date}</p>
+                    <p>Time: ${schedule.departure_time} - ${schedule.arrival_time}</p>
+                    <p>Bus: ${schedule.bus.number_plate} (${schedule.available_seats}/${schedule.total_seats} seats available)</p>
+                    <button onclick="submitPreInform(${schedule.id})">Pre-Inform for This Bus</button>
+                `;
+                schedulesContainer.appendChild(scheduleCard);
+            });
+        } catch (error) {
+            schedulesContainer.innerHTML = '<p>Error loading schedules. Please try again.</p>';
+        }
+    });
+
+    function submitPreInform(scheduleId) {
+        window.location.href = `/preinform-form/?schedule_id=${scheduleId}`;
+    }
+</script>
+{% endblock %}
