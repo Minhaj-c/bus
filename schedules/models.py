@@ -6,6 +6,12 @@ class Bus(models.Model):
     number_plate = models.CharField(max_length=15, unique=True) # e.g., "ABC-1234"
     capacity = models.PositiveIntegerField(default=40) # Total number of seats
     mileage = models.DecimalField(max_digits=5, decimal_places=2, default=5.0, help_text="Mileage in km/liter") 
+    SERVICE_TYPES = (
+        ('all_stop', 'All Stop Service'),
+        ('limited_stop', 'Limited Stop Service'),
+        ('express', 'Express Service'), # You can add more types later
+    )
+    service_type = models.CharField(max_length=20, choices=SERVICE_TYPES, default='all_stop')
     is_active = models.BooleanField(default=True)
 
     def __str__(self):

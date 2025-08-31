@@ -60,6 +60,11 @@ class Stop(models.Model):
     name = models.CharField(max_length=100) # e.g., "Central Library", "Maple St & 5th Ave"
     sequence = models.PositiveIntegerField() # Order of the stop on the route (1, 2, 3...)
     distance_from_origin = models.DecimalField(max_digits=6, decimal_places=2, help_text="Distance from route start in km")
+    is_limited_stop = models.BooleanField(
+        default=False, 
+        help_text="Check if this is a major stop served by limited stop buses"
+    )
+    
 
     # Meta class defines database constraints and ordering
     class Meta:
