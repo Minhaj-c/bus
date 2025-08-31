@@ -64,3 +64,33 @@ class Schedule(models.Model):
             self.save()
             return True
         return False
+
+
+# NEW MODEL ADDED BELOW - DO NOT REMOVE EXISTING CODE ABOVE
+class BusSchedule(models.Model):
+    """
+    Tracks exactly when a bus is assigned to which route for weekly planning.
+    This is for OPERATIONAL PLANNING (which bus runs which route when).
+    Different from Schedule model which is for PASSENGER BOOKING.
+    """
+    bus = models.ForeignKey(Bus, on_delete=models.CASCADE, related_name='bus_schedules')
+    route = models.ForeignKey(Route, on_delete=models.CASCADE, related_name='bus_schedules')
+    date = models.DateField(help_text="Date of the assignment")
+    start_time = models.TimeField(help_text="When the bus starts this route")
+    end_time = models.TimeField(help_text="When the bus finishes this route")
+    
+    class Meta:
+        ordering = ['date', 'start_time']
+        verbose_name = 'Bus Assignment'
+        verbose_name_plural = 'Bus Assignments'
+    
+    def __str__(self):
+        return f"{self.bus} on {self.route} - {self.date} {self.start_time}-{self.end_time}"
+    
+    def duration_hours(self):
+        """Calculate the duration of this assignment in hours."""
+        from datetime import datetime
+        start = datetime.combine(self.date, self.start_time)
+        end = datetime.combine(self.date, self.end_time)
+        duration = (end - start).total_seconds() / 3600
+        return round(duration, 1)

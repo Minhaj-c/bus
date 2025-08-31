@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>💰 Weekly Profit Calculator</h2>
+
+<div class="card">
+    <h3>Enter Weekly Data</h3>
+    <form method="POST">
+        {% csrf_token %}
+        <div>
+            <label>Select Bus:</label>
+            <select name="bus" required>
+                <option value="">-- Select Bus --</option>
+                {% for bus in buses %}
+                <option value="{{ bus.id }}">{{ bus.number_plate }} (Mileage: {{ bus.mileage }} km/l)</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div>
+            <label>Week Starting Date:</label>
+            <input type="date" name="week_start_date" required>
+        </div>
+        
+        <div>
+            <label>Total Passengers:</label>
+            <input type="number" name="total_passengers" min="1" required>
+        </div>
+        
+        <div>
+            <label>Total Kilometers:</label>
+            <input type="number" name="total_kms" step="0.1" min="1" required>
+        </div>
+        
+        <button type="submit">Calculate Profit</button>
+    </form>
+</div>
+
+{% if calculated_results %}
+<div class="card" style="background-color: #e6ffe6;">
+    <h3>💰 Profit Calculation Results</h3>
+    <p><strong>Bus:</strong> {{ calculated_results.bus.number_plate }}</p>
+    <p><strong>Week Starting:</strong> {{ calculated_results.week_start_date }}</p>
+    <p><strong>Total Passengers:</strong> {{ calculated_results.total_passengers }}</p>
+    <p><strong>Total Kilometers:</strong> {{ calculated_results.total_kms }} km</p>
+    <hr>
+    <p><strong>Revenue:</strong> ₹{{ calculated_results.total_revenue|floatformat:2 }}</p>
+    <p><strong>Cost:</strong> ₹{{ calculated_results.total_cost|floatformat:2 }}</p>
+    <p><strong>Profit:</strong> <span style="font-weight: bold; font-size: 1.2em;">₹{{ calculated_results.total_profit|floatformat:2 }}</span></p>
+</div>
+{% endif %}
+
+{% endblock %}

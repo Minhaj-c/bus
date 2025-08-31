@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>📅 Create Bus Schedule</h2>
+
+<div class="card">
+    <form method="POST">
+        {% csrf_token %}
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div>
+                <label><strong>Select Bus:</strong></label>
+                <select name="bus" required>
+                    <option value="">-- Select Bus --</option>
+                    {% for bus in buses %}
+                    <option value="{{ bus.id }}">{{ bus.number_plate }} ({{ bus.get_service_type_display }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div>
+                <label><strong>Assign to Route:</strong></label>
+                <select name="route" required>
+                    <option value="">-- Select Route --</option>
+                    {% for route in routes %}
+                    <option value="{{ route.id }}">{{ route.number }}: {{ route.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div>
+                <label><strong>Date:</strong></label>
+                <input type="date" name="date" required>
+            </div>
+            
+            <div>
+                <label><strong>Start Time:</strong></label>
+                <input type="time" name="start_time" required>
+            </div>
+            
+            <div>
+                <label><strong>End Time:</strong></label>
+                <input type="time" name="end_time" required>
+            </div>
+        </div>
+        <button type="submit" style="margin-top: 15px;">Create Schedule</button>
+    </form>
+</div>
+
+<div class="card" style="margin-top: 20px;">
+    <h3>Current Schedules</h3>
+    <table style="width: 100%;">
+        <tr style="background-color: #f5f5f5;">
+            <th>Bus</th>
+            <th>Route</th>
+            <th>Date</th>
+            <th>Time</th>
+            <th>Duration</th>
+        </tr>
+        {% for schedule in schedules %}
+        <tr>
+            <td>{{ schedule.bus.number_plate }}</td>
+            <td>{{ schedule.route.number }}</td>
+            <td>{{ schedule.date }}</td>
+            <td>{{ schedule.start_time }} - {{ schedule.end_time }}</td>
+            <td>{{ schedule.duration_hours|floatformat:1 }} hours</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+{% endblock %}

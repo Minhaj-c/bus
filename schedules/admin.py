@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Bus, Schedule
+from .models import Bus, Schedule, BusSchedule  # <-- ADD BusSchedule HERE
 
 @admin.register(Bus)
 class BusAdmin(admin.ModelAdmin):
@@ -21,3 +21,11 @@ class ScheduleAdmin(admin.ModelAdmin):
     # This is a powerful feature: show available seats right in the list
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('route', 'bus', 'driver')
+
+# NEW ADMIN REGISTRATION ADDED BELOW - DO NOT REMOVE EXISTING CODE ABOVE
+@admin.register(BusSchedule)
+class BusScheduleAdmin(admin.ModelAdmin):
+    list_display = ('bus', 'route', 'date', 'start_time', 'end_time', 'duration_hours')
+    list_filter = ('date', 'bus', 'route')
+    search_fields = ('bus__number_plate', 'route__number')
+    date_hierarchy = 'date'  # Adds a date drill-down navigation
