@@ -24,4 +24,5 @@ urlpatterns = [
     path('', include('schedules.urls')),
     path('', include('preinforms.urls')),
     path('', include('demand.urls')),
+    path('', include('operations.urls')),
 ]

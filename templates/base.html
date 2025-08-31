@@ -18,6 +18,9 @@
         <nav>
             <a href="/"><button>Home</button></a>
             <a href="/demand-alert/"><button>Report Demand</button></a>
+             {% if user.is_authenticated and user.role == 'admin' %}
+    <a href="/admin-dashboard/"><button>Admin Dashboard</button></a>
+    {% endif %}
         </nav>
         <hr>
     </header>
