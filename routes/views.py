@@ -15,6 +15,11 @@ def api_welcome(request):
             'schedules': '/api/schedules/?route_id=1&date=2023-10-27',
             'demand_alerts': '/api/demand-alerts/',
             'preinforms': '/api/preinforms/',
+        },
+        'pages' : {
+            
+            'homepage': '/',
+            'report_demand': '/demand-alert/' 
         }
     })
     

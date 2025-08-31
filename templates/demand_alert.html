@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>🚨 Report Passenger Demand</h2>
+<p>Report how many people are waiting at a stop right now (including yourself).</p>
+
+{% if not user.is_authenticated %}
+<div class="card" style="background-color: #ffe6e6; border: 1px solid #ff9999;">
+    <h3>⚠️ Authentication Required</h3>
+    <p>You need to be logged in to report demand.</p>
+    <a href="/admin/login/?next=/demand-alert/"><button>Login Here</button></a>
+</div>
+{% else %}
+<div class="card">
+    <form id="demand-alert-form">
+        {% csrf_token %}
+        
+        <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; font-weight: bold;">Select Bus Stop:</label>
+            <select name="stop" required style="padding: 8px; width: 100%; border: 1px solid #ddd; border-radius: 4px;">
+                <option value="">-- Choose a stop --</option>
+                {% for stop in stops %}
+                <option value="{{ stop.id }}">{{ stop.name }} (Route {{ stop.route.number }})</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div style="margin-bottom: 15px;">
+            <label style="display: block; margin-bottom: 5px; font-weight: bold;">Number of People Waiting:</label>
+            <input 
+                type="number" 
+                name="number_of_people" 
+                min="1" 
+                max="100" 
+                value="1" 
+                required 
+                style="padding: 8px; width: 100px; border: 1px solid #ddd; border-radius: 4px;"
+            >
+            <div style="font-size: 12px; color: #666; margin-top: 5px;">Include yourself in the count</div>
+        </div>
+        
+        <button type="submit" style="background: #28a745; padding: 12px 20px; font-size: 16px;">Submit Demand Report</button>
+    </form>
+</div>
+
+<div id="form-message" style="margin-top: 20px; padding: 10px; border-radius: 4px;"></div>
+
+<script>
+    document.getElementById('demand-alert-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const formObject = {
+            stop: parseInt(formData.get('stop')),
+            number_of_people: parseInt(formData.get('number_of_people'))
+        };
+        
+        const messageDiv = document.getElementById('form-message');
+        messageDiv.innerHTML = 'Submitting report...';
+        messageDiv.style.color = 'blue';
+        messageDiv.style.backgroundColor = '#e6f7ff';
+        messageDiv.style.border = '1px solid #99d6ff';
+
+        try {
+            const response = await fetch('/api/demand-alerts/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+                },
+                body: JSON.stringify(formObject)
+            });
+
+            if (response.ok) {
+                messageDiv.innerHTML = '✅ Demand report submitted successfully! Admin will be notified.';
+                messageDiv.style.color = 'green';
+                messageDiv.style.backgroundColor = '#e6ffe6';
+                messageDiv.style.border = '1px solid #99ff99';
+                this.reset();
+            } else {
+                const error = await response.json();
+                messageDiv.innerHTML = '❌ Error: ' + (error.detail || JSON.stringify(error));
+                messageDiv.style.color = 'red';
+                messageDiv.style.backgroundColor = '#ffe6e6';
+                messageDiv.style.border = '1px solid #ff9999';
+            }
+        } catch (error) {
+            messageDiv.innerHTML = '❌ Network error: ' + error.message;
+            messageDiv.style.color = 'red';
+            messageDiv.style.backgroundColor = '#ffe6e6';
+            messageDiv.style.border = '1px solid #ff9999';
+        }
+    });
+</script>
+{% endif %}
+{% endblock %}
