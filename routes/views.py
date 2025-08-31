@@ -10,7 +10,8 @@ def api_welcome(request):
         'message': 'Welcome to the Transport Management API!',
         'endpoints': {
             'routes': '/api/routes/',
-            'admin': '/admin/'
+            'admin': '/admin/',
+            'schedules': '/api/schedules/?route_id=1&date=2023-10-27',
         }
     })
 
