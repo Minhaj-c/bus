@@ -16,7 +16,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name="Bus",
+            name="PreInform",
             fields=[
                 (
                     "id",
@@ -27,59 +27,49 @@ class Migration(migrations.Migration):
                         verbose_name="ID",
                     ),
                 ),
-                ("number_plate", models.CharField(max_length=15, unique=True)),
-                ("capacity", models.PositiveIntegerField(default=40)),
-                ("is_active", models.BooleanField(default=True)),
-            ],
-        ),
-        migrations.CreateModel(
-            name="Schedule",
-            fields=[
+                ("date_of_travel", models.DateField()),
+                ("desired_time", models.TimeField()),
+                ("passenger_count", models.PositiveIntegerField(default=1)),
                 (
-                    "id",
-                    models.BigAutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name="ID",
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("pending", "Pending"),
+                            ("noted", "Noted by Controller"),
+                        ],
+                        default="pending",
+                        max_length=20,
                     ),
                 ),
-                ("date", models.DateField()),
-                ("departure_time", models.TimeField()),
-                ("arrival_time", models.TimeField()),
-                ("total_seats", models.PositiveIntegerField()),
-                ("available_seats", models.PositiveIntegerField()),
                 ("created_at", models.DateTimeField(auto_now_add=True)),
                 ("updated_at", models.DateTimeField(auto_now=True)),
                 (
-                    "bus",
+                    "boarding_stop",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
-                        related_name="schedules",
-                        to="schedules.bus",
-                    ),
-                ),
-                (
-                    "driver",
-                    models.ForeignKey(
-                        limit_choices_to={"role": "driver"},
-                        on_delete=django.db.models.deletion.CASCADE,
-                        related_name="schedules",
-                        to=settings.AUTH_USER_MODEL,
+                        related_name="boarding_passengers",
+                        to="routes.stop",
                     ),
                 ),
                 (
                     "route",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
-                        related_name="schedules",
+                        related_name="preinforms",
                         to="routes.route",
+                    ),
+                ),
+                (
+                    "user",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="preinforms",
+                        to=settings.AUTH_USER_MODEL,
                     ),
                 ),
             ],
             options={
-                "ordering": ["date", "departure_time"],
-                "unique_together": {("driver", "date", "departure_time")},
+                "ordering": ["-created_at"],
             },
         ),
     ]
