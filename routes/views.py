@@ -13,6 +13,7 @@ def api_welcome(request):
             'routes': '/api/routes/',
             'admin': '/admin/',
             'schedules': '/api/schedules/?route_id=1&date=2023-10-27',
+            'demand_alerts': '/api/demand-alerts/',
             'preinforms': '/api/preinforms/',
         }
     })

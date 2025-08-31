@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'routes',
     'schedules',
     'preinforms',
+    'demand',
 ]
 
 MIDDLEWARE = [
