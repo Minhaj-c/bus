@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>✅ Weekly Report Generated</h2>
+
+<div class="card">
+    <h3>Report for {{ week_start }} to {{ week_end }}</h3>
+    
+    <table style="width: 100%;">
+        <tr style="background-color: #f5f5f5;">
+            <th>Bus</th>
+            <th>Route</th>
+            <th>Estimated Passengers</th>
+            <th>Total KM</th>
+            <th>Status</th>
+        </tr>
+        {% for data in report_data %}
+        <tr>
+            <td>{{ data.bus.number_plate }}</td>
+            <td>{{ data.route.number }}</td>
+            <td>{{ data.estimated_passengers }}</td>
+            <td>{{ data.total_kms }}</td>
+            <td>{% if data.created %}Created{% else %}Updated{% endif %}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+
+<a href="/admin-dashboard/"><button>Back to Dashboard</button></a>
+{% endblock %}
