@@ -144,5 +144,5 @@ REST_FRAMEWORK = {
 }
 
 # Constants for financial calculations
-TICKET_PRICE_PER_KM = 2  # Rs. 2 per kilometer
-FUEL_PRICE_PER_LITER = 100  # Rs. 100 per liter
+TICKET_PRICE_PER_KM = 10  # Rs. 2 per kilometer
+FUEL_PRICE_PER_LITER = 80  # Rs. 100 per liter
