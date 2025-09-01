@@ -1,12 +1,12 @@
-from django.shortcuts import render, redirect  # <-- ADD redirect
+from django.shortcuts import render, redirect  
 from django.contrib.auth.decorators import user_passes_test
 from django.utils import timezone
 from datetime import timedelta
 from .models import WeeklyPerformance
 from django.db.models import Sum, Count  
-from django.contrib import messages  # <-- ADD THIS IMPORT
-from schedules.models import BusSchedule  # <-- ADD THESE IMPORTS
-from preinforms.models import PreInform  # <-- ADD THIS IMPORT
+from django.contrib import messages  
+from schedules.models import BusSchedule  
+from preinforms.models import PreInform  
 
 def admin_check(user):
     return user.is_authenticated and user.role == 'admin'
@@ -122,3 +122,102 @@ def generate_weekly_report_view(request):
         'week_start': start_of_last_week,
         'week_end': end_of_last_week
     })
+    
+
+
+@user_passes_test(admin_check)
+def analytics_dashboard(request):
+    """Advanced analytics dashboard with trends and patterns"""
+    
+    today = timezone.now().date()
+    start_date = today - timedelta(weeks=8)
+    
+    # 1. Weekly Trends
+    weekly_data = WeeklyPerformance.objects.filter(
+        week_start_date__gte=start_date
+    ).values('week_start_date')
+    
+    weekly_trends = []
+    for week in weekly_data.distinct():
+        week_start = week['week_start_date']
+        week_data = WeeklyPerformance.objects.filter(week_start_date=week_start)
+        
+        weekly_trends.append({
+            'week_start_date': week_start,
+            'total_profit': sum(p.total_profit for p in week_data),
+            'total_revenue': sum(p.total_revenue for p in week_data),
+            'total_passengers': sum(p.total_passengers for p in week_data),
+        })
+    
+    # 2. Route Performance
+    route_data = []
+    for performance in WeeklyPerformance.objects.filter(week_start_date__gte=start_date):
+        found = False
+        for item in route_data:
+            if item['route__number'] == performance.route.number:
+                item['total_profit'] += performance.total_profit
+                item['total_kms'] += performance.total_kms
+                item['total_passengers'] += performance.total_passengers
+                found = True
+                break
+        
+        if not found:
+            route_data.append({
+                'route__number': performance.route.number,
+                'route__name': performance.route.name,
+                'total_profit': performance.total_profit,
+                'total_kms': performance.total_kms,
+                'total_passengers': performance.total_passengers,
+            })
+    
+    for item in route_data:
+        item['profit_per_km'] = item['total_profit'] / item['total_kms'] if item['total_kms'] > 0 else 0
+    
+    route_performance = sorted(route_data, key=lambda x: x['total_profit'], reverse=True)[:10]
+    
+    # 3. Bus Efficiency
+    bus_data = []
+    for performance in WeeklyPerformance.objects.filter(week_start_date__gte=start_date):
+        found = False
+        for item in bus_data:
+            if item['bus__number_plate'] == performance.bus.number_plate:
+                item['total_profit'] += performance.total_profit
+                item['total_revenue'] += performance.total_revenue
+                item['total_kms'] += performance.total_kms
+                item['total_passengers'] += performance.total_passengers
+                found = True
+                break
+        
+        if not found:
+            bus_data.append({
+                'bus__number_plate': performance.bus.number_plate,
+                'total_profit': performance.total_profit,
+                'total_revenue': performance.total_revenue,
+                'total_kms': performance.total_kms,
+                'total_passengers': performance.total_passengers,
+            })
+    
+    for item in bus_data:
+        item['revenue_per_km'] = item['total_revenue'] / item['total_kms'] if item['total_kms'] > 0 else 0
+    
+    bus_efficiency = sorted(bus_data, key=lambda x: x['revenue_per_km'], reverse=True)[:10]
+    
+    # 4. Demand Patterns (Fixed for SQLite)
+    from django.db.models.functions import ExtractHour, ExtractWeekDay
+    demand_patterns = (
+        PreInform.objects.filter(created_at__gte=start_date)
+        .annotate(hour=ExtractHour('desired_time'))
+        .annotate(day_of_week=ExtractWeekDay('date_of_travel'))
+        .values('hour', 'day_of_week')
+        .annotate(demand_count=Count('id'))
+        .order_by('day_of_week', 'hour')
+    )
+    
+    context = {
+        'weekly_trends': weekly_trends,
+        'route_performance': route_performance,
+        'bus_efficiency': bus_efficiency,
+        'demand_patterns': list(demand_patterns),
+    }
+    
+    return render(request, 'analytics_dashboard.html', context)
