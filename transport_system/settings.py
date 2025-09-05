@@ -25,7 +25,10 @@ SECRET_KEY = "django-insecure-5%$7+c%o2#@xh_lmav_siul6+3+b+r)ii&hp(7qj55yi4_&1g@
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    
+    "192.168.163.81"
+]
 
 
 # Application definition
@@ -131,7 +134,11 @@ STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 AUTH_USER_MODEL = 'users.CustomUser'
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOWED_ORIGINS = [
+    "http://192.168.163.81:3000",  # Your Flutter app
+]
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
@@ -146,3 +153,9 @@ REST_FRAMEWORK = {
 # Constants for financial calculations
 TICKET_PRICE_PER_KM = 10  # Rs. 2 per kilometer
 FUEL_PRICE_PER_LITER = 80  # Rs. 100 per liter
+
+SESSION_COOKIE_AGE = 86400  # 24 hours
+
+SESSION_SAVE_EVERY_REQUEST = True
+SESSION_COOKIE_HTTPONLY = False
+SESSION_COOKIE_SAMESITE = 'Lax'

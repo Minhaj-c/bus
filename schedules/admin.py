@@ -1,31 +1,41 @@
 from django.contrib import admin
-from .models import Bus, Schedule, BusSchedule  # <-- ADD BusSchedule HERE
+from .models import Bus, Schedule, BusSchedule
 
 @admin.register(Bus)
 class BusAdmin(admin.ModelAdmin):
-    list_display = ('number_plate', 'capacity', 'is_active')
-    list_filter = ('is_active',)
+    list_display = (
+        'number_plate', 'capacity', 'is_active', 'is_running',
+        'current_route', 'last_location_update'
+    )
+    list_filter = ('is_active', 'is_running', 'service_type')
     search_fields = ('number_plate',)
+    readonly_fields = ('last_location_update',)
+    
+    fieldsets = (
+        ('Basic Info', {
+            'fields': ('number_plate', 'capacity', 'mileage', 'service_type', 'is_active')
+        }),
+        ('Real-time Tracking', {
+            'fields': (
+                'is_running', 'current_route',
+                'current_latitude', 'current_longitude', 'last_location_update'
+            )
+        })
+    )
 
 @admin.register(Schedule)
 class ScheduleAdmin(admin.ModelAdmin):
-    # Fields to display in the list view
     list_display = ('route', 'date', 'departure_time', 'bus', 'driver', 'available_seats', 'total_seats')
-    # Adds filters for date, route, etc.
     list_filter = ('date', 'route', 'bus')
-    # Adds a search box
     search_fields = ('route__number', 'bus__number_plate', 'driver__email')
-    # Drop-down filters for better UX
     raw_id_fields = ('route', 'bus', 'driver')
 
-    # This is a powerful feature: show available seats right in the list
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('route', 'bus', 'driver')
 
-# NEW ADMIN REGISTRATION ADDED BELOW - DO NOT REMOVE EXISTING CODE ABOVE
 @admin.register(BusSchedule)
 class BusScheduleAdmin(admin.ModelAdmin):
     list_display = ('bus', 'route', 'date', 'start_time', 'end_time', 'duration_hours')
     list_filter = ('date', 'bus', 'route')
     search_fields = ('bus__number_plate', 'route__number')
-    date_hierarchy = 'date'  # Adds a date drill-down navigation
+    date_hierarchy = 'date'

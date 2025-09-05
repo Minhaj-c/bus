@@ -1,63 +1,107 @@
 from django.db import models
-from django.conf import settings # To reference the CustomUser model
-from routes.models import Route # To reference the Route model
+from django.conf import settings
+from routes.models import Route
+from django.utils import timezone
 
 class Bus(models.Model):
-    number_plate = models.CharField(max_length=15, unique=True) # e.g., "ABC-1234"
-    capacity = models.PositiveIntegerField(default=40) # Total number of seats
-    mileage = models.DecimalField(max_digits=5, decimal_places=2, default=5.0, help_text="Mileage in km/liter") 
+    number_plate = models.CharField(max_length=15, unique=True)
+    capacity = models.PositiveIntegerField(default=40)
+    mileage = models.DecimalField(max_digits=5, decimal_places=2, default=5.0, help_text="Mileage in km/liter")
+    
     SERVICE_TYPES = (
         ('all_stop', 'All Stop Service'),
         ('limited_stop', 'Limited Stop Service'),
-        ('express', 'Express Service'), # You can add more types later
+        ('express', 'Express Service'),
     )
     service_type = models.CharField(max_length=20, choices=SERVICE_TYPES, default='all_stop')
     is_active = models.BooleanField(default=True)
+    
+    # Location tracking fields
+    current_latitude = models.DecimalField(
+        max_digits=10, decimal_places=8, null=True, blank=True,
+        help_text="Current GPS latitude"
+    )
+    current_longitude = models.DecimalField(
+        max_digits=10, decimal_places=8, null=True, blank=True,
+        help_text="Current GPS longitude" 
+    )
+    last_location_update = models.DateTimeField(
+        null=True, blank=True,
+        help_text="When location was last updated"
+    )
+    is_running = models.BooleanField(
+        default=False,
+        help_text="Is bus currently on route"
+    )
+    current_route = models.ForeignKey(
+        Route, null=True, blank=True, on_delete=models.SET_NULL,
+        help_text="Route currently being served"
+    )
 
     def __str__(self):
         return f"{self.number_plate} (Seats: {self.capacity})"
+    
+    def save(self, *args, **kwargs):
+        """Override save to auto-update last_location_update when location changes"""
+        # Check if this is an update (not a new creation)
+        if self.pk:
+            # Get the original object from database
+            try:
+                original = Bus.objects.get(pk=self.pk)
+                # Check if location fields have changed
+                if (original.current_latitude != self.current_latitude or 
+                    original.current_longitude != self.current_longitude):
+                    self.last_location_update = timezone.now()
+            except Bus.DoesNotExist:
+                pass
+        else:
+            # For new objects, set last_location_update if location is provided
+            if self.current_latitude and self.current_longitude:
+                self.last_location_update = timezone.now()
+        
+        super().save(*args, **kwargs)
+    
+    def update_location(self, latitude, longitude):
+        """Update bus location with timestamp"""
+        self.current_latitude = latitude
+        self.current_longitude = longitude
+        self.last_location_update = timezone.now()
+        self.save(update_fields=['current_latitude', 'current_longitude', 'last_location_update'])
+
 
 class Schedule(models.Model):
-    # The core relationship: Which route is this bus running?
     route = models.ForeignKey(Route, on_delete=models.CASCADE, related_name='schedules')
-    # Which physical bus is assigned?
     bus = models.ForeignKey(Bus, on_delete=models.CASCADE, related_name='schedules')
-    # Which driver is assigned? Link only to users with the 'driver' role.
     driver = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        limit_choices_to={'role': 'driver'}, # CRITICAL: Only drivers can be assigned
+        limit_choices_to={'role': 'driver'},
         related_name='schedules'
     )
-
-    # When does this trip happen?
+    
     date = models.DateField()
-    departure_time = models.TimeField() # Start time from the origin
-    arrival_time = models.TimeField() # Approximate arrival at destination
-
-    # SEAT AVAILABILITY - THE CORE OF YOUR NEW FEATURE
-    total_seats = models.PositiveIntegerField() # Should equal bus.capacity, but stored for record-keeping
-    available_seats = models.PositiveIntegerField() # This number decreases with each booking
-
-    # Timestamps
+    departure_time = models.TimeField()
+    arrival_time = models.TimeField()
+    
+    total_seats = models.PositiveIntegerField()
+    available_seats = models.PositiveIntegerField()
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        # Prevent double-booking a bus or driver on the same date and time
-        unique_together = ['bus', 'date', 'departure_time']
-        unique_together = ['driver', 'date', 'departure_time']
-        # Order schedules by date and time by default
+        unique_together = [
+            ['bus', 'date', 'departure_time'],
+            ['driver', 'date', 'departure_time']
+        ]
         ordering = ['date', 'departure_time']
 
     def __str__(self):
         return f"{self.route.number} - {self.date} {self.departure_time} ({self.bus.number_plate})"
 
-    # A helpful method to check if seats are available
     def is_seat_available(self):
         return self.available_seats > 0
 
-    # A method to "book" a seat (we will use this later)
     def book_seat(self):
         if self.is_seat_available():
             self.available_seats -= 1
@@ -66,13 +110,8 @@ class Schedule(models.Model):
         return False
 
 
-# NEW MODEL ADDED BELOW - DO NOT REMOVE EXISTING CODE ABOVE
 class BusSchedule(models.Model):
-    """
-    Tracks exactly when a bus is assigned to which route for weekly planning.
-    This is for OPERATIONAL PLANNING (which bus runs which route when).
-    Different from Schedule model which is for PASSENGER BOOKING.
-    """
+    """Operational planning - which bus runs which route when"""
     bus = models.ForeignKey(Bus, on_delete=models.CASCADE, related_name='bus_schedules')
     route = models.ForeignKey(Route, on_delete=models.CASCADE, related_name='bus_schedules')
     date = models.DateField(help_text="Date of the assignment")
@@ -88,7 +127,7 @@ class BusSchedule(models.Model):
         return f"{self.bus} on {self.route} - {self.date} {self.start_time}-{self.end_time}"
     
     def duration_hours(self):
-        """Calculate the duration of this assignment in hours."""
+        """Calculate the duration of this assignment in hours"""
         from datetime import datetime
         start = datetime.combine(self.date, self.start_time)
         end = datetime.combine(self.date, self.end_time)

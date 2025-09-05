@@ -17,6 +17,8 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path, include 
+from users.api_views import signup_view
+from routes.views import api_welcome    
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -25,4 +27,26 @@ urlpatterns = [
     path('', include('preinforms.urls')),
     path('', include('demand.urls')),
     path('', include('operations.urls')),
+    path("api/", api_welcome, name="api-welcome"),
+    path("api/signup/", signup_view, name="api-signup"),
+]
+"""
+URL configuration for transport_system project.
+"""
+
+from django.contrib import admin
+from django.urls import path, include 
+from users.api_views import signup_view, login_view  # Import both functions
+from routes.views import api_welcome    
+
+urlpatterns = [
+    path("admin/", admin.site.urls),
+    path('', include('routes.urls')),
+    path('', include('schedules.urls')),
+    path('', include('preinforms.urls')),
+    path('', include('demand.urls')),
+    path('', include('operations.urls')),
+    path("api/", api_welcome, name="api-welcome"),
+    path("api/signup/", signup_view, name="api-signup"),
+    path("api/login/", login_view, name="api-login"),  # Add this line
 ]
